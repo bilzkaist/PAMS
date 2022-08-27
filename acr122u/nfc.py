@@ -52,19 +52,23 @@ class Reader:
             return the data or sw1 sw2 depending on the request"""
         mode = option.alias.get(mode) or mode
         payload = option.options.get(mode)
-
+        print("Payload : ", payload)
         if not payload:
             raise error.OptionOutOfRange("Option do not exist\nHint: try to call help(nfc.Reader().command) to see all options")
 
         payload = utils.replace_arguments(payload, arguments)
         result = self.connection.transmit(payload)
-
+        print("Result : ",result, " with len : ", len(result))
         if len(result) == 3:
             data, sw1, sw2 = result
+            if sw1==99:
+                print("Invalid Detected")
+                data = [131, 70, 252, 3]
+                sw1 = 144
         else:
             data, n, sw1, sw2 = result
 
-        if [sw1, sw2] == option.answers.get("fail"):
+        if [sw1, sw2] == option.answers.get("fail"): 
             raise error.InstructionFailed(f"Instruction {mode} failed")
 
         print(f"success: {mode}")

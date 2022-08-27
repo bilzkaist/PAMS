@@ -11,12 +11,12 @@ from hashlib import sha256, sha3_512
 from cryptoLib.ellipticcurve.signature import Signature
 import time
 from cryptoLib.ellipticcurve.math import Math
-#from cryptoLib.pyaes import aes, AES
 from cryptoLib.pyaes.aes import AES, Counter, AESModeOfOperationCTR as aesctr
+import os
 
 #from cryptoLib.aes import aes
 #import cryptoLib.pyaes.aes as aes
-import os
+
 # # Generate privateKey from PEM string
 # privateKey = PrivateKey.fromPem("""
 #     -----BEGIN EC PARAMETERS-----
