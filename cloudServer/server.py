@@ -85,7 +85,7 @@ Copy paste the code above and name it simplewebserver.py
 Starting WebServer:
 python simplewebserver.py
 POST addrecord example using curl:
-curl -X POST http://localhost:9999/api/v1/addrecord/1 -d '{\"asif1\":\"test1\"}' -H "Content-Type: application/json"
+curl -X POST http://localhost:9999/api/v1/addrecord/1 -d '{\"Bilz\":\"test\"}' -H "Content-Type: application/json"
 GET record example using curl:
 curl -X GET http://localhost:9999/api/v1/getrecord/1 -H "Content-Type: application/json" 
 """

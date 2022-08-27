@@ -1,0 +1,1 @@
+environment location: /Users/bilaldastagir/opt/anaconda3/envs/PAMS
