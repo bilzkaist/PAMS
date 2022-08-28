@@ -90,20 +90,16 @@ class NIZKP ():
         p = (rc + "," + signature.toBase64())
         #print("Proof : ",p)
         q = aes.encrypt(p)
-        #print("Q = ",q)
-        R = urllib.parse.quote(str(q))
-        #print("response : ",R)
-        return q 
+        R = urllib.parse.quote(q.hex())
+        return R
     
     def verify(self,R, NFTUser):
         i = input("Enter Verify Password : ")
         key = str(int(sha256((str(i)).encode('utf-8')).hexdigest(),16))[:32]
         k = bytes(key,encoding='utf8')
         aes = aesctr(k)
-        q = urllib.parse.unquote(R)
-        #print("Q : ",str(q))
-        #bytes(q,encoding='utf8')
-        p = aes.decrypt(R).decode('ascii')#bytes(str(q),encoding='utf8')).decode('ascii')
+        q = bytes.fromhex(urllib.parse.unquote(R))
+        p = aes.decrypt(q).decode('ascii')#bytes(str(q),encoding='utf8')).decode('ascii')
         #print("P : ",str(p))
         rc,proof = p.split(",")
         #print("rc : ", rc)
