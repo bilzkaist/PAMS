@@ -232,6 +232,8 @@ keyBob   = bytes(secretKeyBob,encoding='utf8')
 #iv = "InitializationVe"
 
 #aes = AESModeOfOperationCTR(keyAlice)
+print("Length Key Alice : ", len(keyAlice))
+print("Key Alice : ",keyAlice)
 aes = aesctr(keyAlice)
 plaintext = "Text may be any length you wish, no padding is required"
 ciphertext = aes.encrypt(plaintext)

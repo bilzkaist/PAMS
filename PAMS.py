@@ -9,6 +9,7 @@ from cryptoLib.ellipticcurve.privateKey import PrivateKey
 from cryptoLib.ellipticcurve.curve import secp256k1, getCurveByOid
 from cryptoLib.ellipticcurve.ecdsa import Ecdsa
 from cryptoLib.ellipticcurve.privateKey import PrivateKey
+from cryptoLib.ellipticcurve.publicKey import PublicKey
 from hashlib import sha256, sha3_512, sha1, shake_128
 from cryptoLib.ellipticcurve.signature import Signature
 import time
@@ -16,17 +17,19 @@ from cryptoLib.ellipticcurve.math import Math
 from cryptoLib.pyaes.aes import AES, Counter, AESModeOfOperationCTR as aesctr
 import os
 import random
+import urllib.parse
 
 
+curve = secp256k1
 
-
-mintNumber = 1
+counter = 1
 
 class mintNFT:
     def __init__(self, locationTag, verifyKey, inputLink = None):
         self.locationTag = locationTag
         self.verifyKey = verifyKey
         self.inputLink = inputLink
+        self.blockNumber = 11229175
 
 class NFC_Card:
     def __init__(self, proveKey, blockNumber):
@@ -34,7 +37,7 @@ class NFC_Card:
         self.proveKey = proveKey
         self.blockNumber = blockNumber
 
-class PAMS ():
+class NIZKP ():
     def __init__(self, addSCV=None):
         self.curve = secp256k1
         self.addSCV = addSCV or "0x7e09e481f2cc36d201bde90c86fc7f0838aaf36d"
@@ -62,86 +65,54 @@ class PAMS ():
         #print(f"Location Decoded string: {locationOPStr}")
         return locationOPStr
 
-    def write(self, r, position, number, data):
-        while number >= 16:
-            self.write_16(r, position, 16, data)
-            number -= 16
-            position += 1
-
-
-    def write_16(self, r, position, number, data):
-        r.update_binary_blocks(position, number, data)
-
-
-    def read(self, r, position, number):
-        result = []
-        while number >= 16:
-            result.append(self.read_16(r, position, 16))
-            number -= 16
-            position += 1
-        return result
-
-
-    def read_16(self, r, position, number):
-        return r.read_binary_blocks(position, number)
-
-    def splitByte(self, b): 
-        lowerMask = b'\x0F' 
-        lowerHalf = bytes(b & lowerMask[0])[0] 
-        upperMask = b'\xF0' 
-        upperHalf = bytes(b & upperMask[0])[0] 
-        upperHalf = upperHalf >> 4 
-        return [upperHalf,lowerHalf]
-
-    def generateKeys(self, mintNumber, locationOP, secret="Unknown", CardUUID=None):
+    def generateKeys(self, Number, locationOP, secret="Unknown", CardUUID=None):
         self.locationTagStr = self.getLocationTag(locationOP)
         secretStr = secret
         rd = random.Random()
-        rd.seed(mintNumber)
+        rd.seed(Number)
         self.uuidStr = CardUUID or str(uuid.UUID(int=rd.getrandbits(128)))
         proveKey = PrivateKey(int(sha256((secretStr + self.locationTagStr + self.uuidStr).encode('utf-8')).hexdigest(),16))
         verifyKey = proveKey.publicKey() 
-        return proveKey, verifyKey
-    #     proveKeyStr = proveKey.toString()
-    #     print("ProveKEY String : [",proveKeyStr,"]")
-    #     proveKeyLen = len(proveKeyStr)
-    #     print("proveKey String : [",proveKeyStr,"] (",proveKeyLen,")")
-    #     pk1 = proveKeyStr[0:31]
-    #     pk2 = proveKeyStr[32:63]
-    #     print(" pks : ", pk1, "-",pk2)
-    #     b1 = os.urandom(16)
-    #     b2 = os.urandom(16)
+        #print("vk : ", verifyKey.toString())
+        return proveKey.toString(), verifyKey.toString(), self.locationTagStr
 
-    #     print("b1 and b2 : ", b1, "|", b2)
-
-    #    # proveKeyByte01 = bytes.fromhex(hex(proveKeyStr[0:31]))
-    #    # proveKeyByte02 = bytes.fromhex(hex(proveKeyStr[32:63]))
-    #     proveKeyByte = bytes.fromhex(proveKey.toString())
-    #    # [proveKeyByte01, proveKeyByte02] = self.splitByte(proveKeyByte)
-    #     print("Byte ProveKey : ", (proveKeyByte))# + proveKeyByte01))
-    #     print("Proving Key : ", proveKey.toString(), " with size : ", len(proveKey.toString()))
-    #     print("Verify Key  : ", verifyKey.toString())
-    #     self.blocknumber = 11229175#mintNFT()
-    #     #reader = Reader()
-    #    # reader.load_authentication_data(0x01, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
-    #     #reader.authentication(0x00, 0x61, 0x01)
-    #     #print("Proving Key : ", proveKey.toString())
-    #    # self.write(reader, 0x01, 0x20, [cardKeyByte [i] for i in range(16)])
-    #     #self.write(reader, 0x01, 0x10, [proveKeyByte01[i] for i in range(16)])
-    #     #self.write(reader, 0x01, 0x20, [proveKeyByte02[i] for i in range(16)])
-    #    # self.write(reader, 0x01, 0x40, [b1[i] for i in range(16)])
-    #    # self.write(reader, 0x01, 0x50, [b2[i] for i in range(16)])
-    #    # print(self.read(reader, 0x01, 0x20))
         
         
 
-    def prover(self, challenge):
-        signature = Ecdsa.sign(challenge, privateKey)
-        response = challenge + signature
-        return response    
+    def prove(self, NFC_Card_User):
+        i = input("Enter Prove Password : ")
+        key = str(int(sha256((str(i)).encode('utf-8')).hexdigest(),16))[:32]
+        k = bytes(key,encoding='utf8')
+        aes = aesctr(k)
+        rc = str(NFC_Card_User.blockNumber) 
+        pk = PrivateKey.fromString(NFC_Card_User.proveKey, secp256k1)
+        signature = Ecdsa.sign(rc, pk)
+        p = (rc + "," + signature.toBase64())
+        #print("Proof : ",p)
+        q = aes.encrypt(p)
+        #print("Q = ",q)
+        R = urllib.parse.quote(str(q))
+        #print("response : ",R)
+        return q 
     
-    def verify(self, response, signature):
-        if (Ecdsa.verify(response, signature, publicKey)):
+    def verify(self,R, NFTUser):
+        i = input("Enter Verify Password : ")
+        key = str(int(sha256((str(i)).encode('utf-8')).hexdigest(),16))[:32]
+        k = bytes(key,encoding='utf8')
+        aes = aesctr(k)
+        q = urllib.parse.unquote(R)
+        #print("Q : ",str(q))
+        #bytes(q,encoding='utf8')
+        p = aes.decrypt(R).decode('ascii')#bytes(str(q),encoding='utf8')).decode('ascii')
+        #print("P : ",str(p))
+        rc,proof = p.split(",")
+        #print("rc : ", rc)
+        #print("proof : ", proof)
+        signature = Signature.fromBase64(proof)
+        #print("Sig: ",signature._toString())
+        #print("vk = ", NFTUser.verifyKey)
+        vk =  PublicKey.fromString(NFTUser.verifyKey)
+        if (Ecdsa.verify(rc, signature, vk)):
             flag = True
             print(flag)
         else:
@@ -154,8 +125,16 @@ def main():
     # Write code Here
     locationOP = "8Q8999F8+J799C6+V5"
     cardsRegistered = ["0x437DFB03", "0x0BC250F9" , "0x8346FC03", "0x9670FC03", "0xEB3EBB1F"]
-    A = PAMS()
-    A.mint(mintNumber, locationOP)
+    Alice = NIZKP()
+    pk, vk, lt = Alice.generateKeys(Counter, locationOP)
+    NFTAlice = mintNFT(lt,vk)
+    NFC_Card_Alice = NFC_Card(pk,NFTAlice.blockNumber)
+    responseAlice = Alice.prove(NFC_Card_Alice)
+    if (Alice.verify(responseAlice,NFTAlice)):
+        print("Passed !!!")
+    else:
+        print("Failed !!!")
+   
     print("Main Program is Ended Successfully !!!")
 
 

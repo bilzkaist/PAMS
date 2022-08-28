@@ -6,7 +6,7 @@ from .utils.der import hexFromInt, parse, encodeConstructed, DerFieldType, encod
 from .curve import secp256k1, getCurveByOid
 from .publicKey import PublicKey
 
-
+curve = secp256k1
 class PrivateKey:
 
     def __init__(self, secret=None):
@@ -62,7 +62,7 @@ class PrivateKey:
 
     @classmethod
     def fromString(cls, string, curve=secp256k1):
-        return PrivateKey(secret=intFromHex(string), curve=curve)
+        return PrivateKey(secret=intFromHex(string))#, curve=curve)
 
 
 _pemTemplate = """
