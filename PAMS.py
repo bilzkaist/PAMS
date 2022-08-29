@@ -19,11 +19,19 @@ import os
 import random
 import urllib.parse
 
+import pyotp
+
+
 import requests
 from requests.structures import CaseInsensitiveDict
 
 url = "http://localhost:9999/api/v1/mintNFT/1"
 
+# secret key (seed)
+SECRET_KEY = "base32topsecret7"
+
+# initialize the TOTP generator with a specific configuration
+totp = pyotp.TOTP(SECRET_KEY, digest=sha256, digits=6, interval=30)
 
 
 curve = secp256k1
@@ -72,15 +80,16 @@ class NIZKP ():
         return locationOPStr
 
     def generateKeys(self, Number, locationOP, secret="Unknown", CardUUID=None):
+        print("...............................REG........................................")
         self.locationTagStr = self.getLocationTag(locationOP)
-        secretStr = secret
+        secretStr = str(input("Enter Key Secret : "))
         rd = random.Random()
         rd.seed(Number)
         self.uuidStr = CardUUID or str(uuid.UUID(int=rd.getrandbits(128)))
         reader = Reader()
         uid = reader.get_uid()
-        print("UID : ", uid)
-        proveKey = PrivateKey(int(sha256((str(uid)).encode('utf-8')).hexdigest(),16))
+       # print("UID : ", uid)
+        proveKey = PrivateKey(int(sha3_512((str(uid) + secretStr).encode('utf-8')).hexdigest(),16))
         #proveKey = PrivateKey(int(sha256((secretStr + self.locationTagStr + self.uuidStr).encode('utf-8')).hexdigest(),16))
         verifyKey = proveKey.publicKey() 
         #print("vk : ", verifyKey.toString())
@@ -90,6 +99,12 @@ class NIZKP ():
         
 
     def prove(self, challenge):
+        print("...............................PROVE........................................")
+        secretStr = str(input("Enter Key Secret : "))
+        for i in range(3):
+            password = totp.now()
+            print(password)
+            time.sleep(1)
         i = input("Enter Prove Password : ")
         key = str(int(sha256((str(i)).encode('utf-8')).hexdigest(),16))[:32]
         k = bytes(key,encoding='utf8')
@@ -98,7 +113,7 @@ class NIZKP ():
         #pk = PrivateKey.fromString(NFC_Card_User.proveKey, secp256k1)
         reader = Reader()
         uid = reader.get_uid()
-        pk = PrivateKey(int(sha256((str(uid)).encode('utf-8')).hexdigest(),16))
+        pk = PrivateKey(int(sha3_512((str(uid) + secretStr).encode('utf-8')).hexdigest(),16))
         signature = Ecdsa.sign(rc, pk)
         p = (rc + "," + signature.toBase64())
         #print("Proof : ",p)
@@ -107,6 +122,7 @@ class NIZKP ():
         return R
     
     def verify(self,R, NFTUser):
+        print("...............................VERIFY........................................")
         i = input("Enter Verify Password : ")
         key = str(int(sha256((str(i)).encode('utf-8')).hexdigest(),16))[:32]
         k = bytes(key,encoding='utf8')
