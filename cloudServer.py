@@ -20,6 +20,10 @@ import json
 import threading
 from urllib import parse
 
+# POST request
+# curl -X POST http://localhost:9999/api/v1/mintNFT/1 -d '{\"Bilz\":\"test\"}' -H "Content-Type: application/json"
+# GET  request
+# curl -X GET http://localhost:9999/api/v1/getNFT/1 -H "Content-Type: application/json" 
 
 
 #Global Variables 
@@ -71,7 +75,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 # Return json, even though it came in as POST URL params
                 data = json.dumps(LocalData.records[record_id])
-                print("Minted NFT  %s: %s" % (record_id, data))
+                print("Minted NFT at %s: %s" % (record_id, data))
                 self.wfile.write(data.encode('utf8'))
             else:
                 self.send_response(404, 'Not Found: record does not exist')
@@ -83,7 +87,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 def run_beta():
     print("Beta Program is Started........... !!!")
     # Write code Here
-    ip = '127.0.0.1'
+    ip = '0.0.0.0'
     port = 9999
     server = HTTPServer((ip, port), HTTPRequestHandler)
     print('HTTP Server Running...........')
