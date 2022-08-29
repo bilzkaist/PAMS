@@ -21,9 +21,9 @@ import threading
 from urllib import parse
 
 # POST request
-# curl -X POST http://localhost:9999/api/v1/mintNFT/1 -d '{\"Bilz\":\"test\"}' -H "Content-Type: application/json"
+# curl -X POST http://143.248.55.55:9999/api/v1/mintNFT/1 -d '{\"Bilz\":\"test\"}' -H "Content-Type: application/json"
 # GET  request
-# curl -X GET http://localhost:9999/api/v1/getNFT/1 -H "Content-Type: application/json" 
+# curl -X GET http://143.248.55.55:9999/api/v1/getNFT/1 -H "Content-Type: application/json" 
 
 
 #Global Variables 

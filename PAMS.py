@@ -37,7 +37,9 @@ SECRET_KEY = "base32topsecret7"
 
 # initialize the TOTP generator with a specific configuration
 
+BLOCKNUMBER_RINKEBY_ETHERSCAN = 11287739
 
+APIKEY_ETHERSCAN="N7QHYXYBSFRH5TMP1T82I6QKZ6QXYC3URT"
 
 curve = secp256k1
 
@@ -98,12 +100,20 @@ class NIZKP ():
 
     def generateKeys(self, Secret=None):
         print("...............................REG........................................")
-        secretStr = str(input("Enter Key Secret : "))
+        secretStr = Secret or str(input("Enter Key Secret : "))
         reader = Reader()
         uid = reader.get_uid()
         proveKey = PrivateKey(int(sha3_512((str(uid) + secretStr).encode('utf-8')).hexdigest(),16))
-        verifyKey = proveKey.publicKey() 
+        verifyKey = proveKey.publicKey()
+        print("Prove Key : ", proveKey.toString()) 
+        print("Verify Key : ", verifyKey.toString()) 
         return verifyKey.toString()
+
+    def getBlockchainNFTInfo():
+        etherscanAPIURL = "https://api-rinkeby.etherscan.io/api?module=account&action=txlist&address=0x7e09e481f2cc36d201bde90c86fc7f0838aaf36d&startblock=11287739&endblock=11287739&page=1&offset=10&sort=asc&apikey=N7QHYXYBSFRH5TMP1T82I6QKZ6QXYC3URT"
+        resp = requests.get(url, None)
+        print("Response Code : ", resp.status_code)
+        print("Response Info : ", resp.content.decode("utf-8"))
 
     def mintNFT(self, lt, vk, urlMint=None):
         id = str(randint(0, 99999999))
@@ -123,13 +133,13 @@ class NIZKP ():
         headers["Content-Type"] = "application/json"
         resp = requests.get(url, headers=headers)
         print(resp.status_code)
-        print("Got reponse : ",resp.content)
+        #print("Got reponse : ",resp.content)
         data = dumps(resp.content.decode("utf-8")) #json.dumps(a)
         ltRaw,vkRaw = data.split(",")
         headerRaw, lt = ltRaw.split("|")
         vk, footerRaw = vkRaw.split(";")
-        print("locationTag : ", lt)
-        print("verifyKey   : ", vk)
+        #print("locationTag : ", lt)
+        #print("verifyKey   : ", vk)
         return lt,vk 
         
 
@@ -153,11 +163,13 @@ class NIZKP ():
         pk = PrivateKey(int(sha3_512((str(uid) + secretStr).encode('utf-8')).hexdigest(),16))
         signature = Ecdsa.sign(rc, pk)
         p = (rc + "," + signature.toBase64())
-        print("challenge : ",rc)
+        #print("challenge : ",rc)
         q = aes.encrypt(p)
         R = urllib.parse.quote(q.hex())
         
         return R
+
+  
     
     def verify(self,R, NFTUser):
         print("...............................VERIFY........................................")
@@ -180,19 +192,19 @@ class NIZKP ():
             #print("Sig: ",signature._toString())
             #print("vk = ", NFTUser.verifyKey)
             vk0 = NFTUser.verifyKey
-            print("verifyKey   : ", vk0)
+            #print("verifyKey   : ", vk0)
             lt, vk = self.getNFT(rc)
-            print("locationTag : ", lt)
-            print("verifyKey   : ", vk)
+            #print("locationTag : ", lt)
+            #print("verifyKey   : ", vk)
             verifyKey =  PublicKey.fromString(vk)
             if (Ecdsa.verify(rc, signature, verifyKey)):
                 flag = True
                 print(flag)
                 try:
                     locationOP = self.decodeLocationURL(lt)
-                    print("Location Tag: ",locationOP)
+                    #print("Location Tag: ",locationOP)
                     locationURL = self.urlOPD + locationOP
-                    print("The location URL is: ",locationURL)
+                    #print("The location URL is: ",locationURL)
                     webbrowser.open(locationURL)
                 except:
                     print("Invalid Location !!!")
@@ -206,24 +218,33 @@ class NIZKP ():
             print(flag)
         return flag
 
+def getBlockchainNFTInfo():
+        #etherscanAPIURL = "https://api-rinkeby.etherscan.io/api?module=account&action=txlist&address=0x7e09e481f2cc36d201bde90c86fc7f0838aaf36d&startblock=11287739&endblock=11287739&page=1&offset=10&sort=asc&apikey=N7QHYXYBSFRH5TMP1T82I6QKZ6QXYC3URT"
+        etherscanAPIURL  = "https://api-rinkeby.etherscan.io/api?module=account&action=txlist&address=0x7e09e481f2cc36d201bde90c86fc7f0838aaf36d&startblock=11287739&endblock=11287739&page=1&offset=10&sort=asc&apikey=N7QHYXYBSFRH5TMP1T82I6QKZ6QXYC3URT"
+        resp = requests.get(etherscanAPIURL)
+        print(resp.status_code)
+
+        print("Response Code : ", resp.status_code)
+        print("Response Info : ", resp.content.decode("utf-8"))
+
 def main():
     print("Main Program is Started........... !!!")
     # Write code Here
     urlMint = "http://localhost:9999/api/v1/mintNFT/"
     urlGet = "http://localhost:9999/api/v1/getNFT/"
     urlOPD = "https://plus.codes/8Q8999F8+J7"
-    locationOP = "8Q8999F8+J7"
+    locationOP = "8Q8999F8+J7" #KAIST N1 Building Location
     #cardsRegistered = ["0x437DFB03", "0x0BC250F9" , "0x8346FC03", "0x9670FC03", "0xEB3EBB1F"]
     Alice = NIZKP(30)
     print("Location OP: ", locationOP)
     lt = Alice.encodeLocationURL(locationOP)
-    vk = Alice.generateKeys()
-    print("Location Tag: ",lt)
+    vk = Alice.generateKeys("Bilal")
+    #print("Location Tag: ",lt)
     resPost, id = Alice.mintNFT(lt,vk)
     #resGet = Alice.getNFT(id)
     NFTAlice = NFT(lt,vk)
     challenge = id#NFTAlice.blockNumber
-    responseAlice = Alice.prove(challenge)
+    responseAlice = Alice.prove(challenge, "Bilal")
     print("AUTHENTICATION RESULT: ")
     if (Alice.verify(responseAlice, NFTAlice)):
         print("Passed !!!")
@@ -234,4 +255,5 @@ def main():
 
 
 if __name__ == '__main__':
+    #getBlockchainNFTInfo()
     main()
