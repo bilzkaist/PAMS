@@ -33,7 +33,7 @@ class LocalData(object):
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
-        if re.search('/api/v1/addrecord/*', self.path):
+        if re.search('/api/v1/mintNFT/*', self.path):
             ctype, pdict = cgi.parse_header(
                 self.headers.get('content-type'))
             if ctype == 'application/json':
@@ -42,7 +42,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 data = parse.parse_qs(rfile_str, keep_blank_values=1)
                 record_id = self.path.split('/')[-1]
                 LocalData.records[record_id] = data
-                print("addrecord %s: %s" % (record_id, data))
+                print("Minted NFT at blockNumber %s: %s" % (record_id, data))
                 # HTTP 200: ok
                 self.send_response(200)
             else:
@@ -63,7 +63,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
             # Send out a 200 before we go
             self.send_response(200)
-        elif re.search('/api/v1/getrecord/*', self.path):
+        elif re.search('/api/v1/getNFT/*', self.path):
             record_id = self.path.split('/')[-1]
             if record_id in LocalData.records:
                 self.send_response(200)
@@ -71,7 +71,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 # Return json, even though it came in as POST URL params
                 data = json.dumps(LocalData.records[record_id])
-                print("getrecord %s: %s" % (record_id, data))
+                print("Minted NFT  %s: %s" % (record_id, data))
                 self.wfile.write(data.encode('utf8'))
             else:
                 self.send_response(404, 'Not Found: record does not exist')

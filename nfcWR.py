@@ -5,8 +5,8 @@ reader = Reader()
 #reader.load_authentication_data(0x01, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
 #reader.authentication(0x00, 0x61, 0x01)
 
-reader.load_authentication_data(0x01, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
-reader.authentication(0x00, 0x61, 0x01)
+#reader.load_authentication_data(0x01, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
+#reader.authentication(0x00, 0x61, 0x01)
 
 def write(r, position, number, data):
     while number >= 16:
@@ -31,10 +31,10 @@ def read(r, position, number):
 def read_16(r, position, number):
     return r.read_binary_blocks(position, number)
 
-#reader.get_uid()
-#print("UID : ", reader.get_uid())
+uid = reader.get_uid()
+print("UID : ", uid)
 #reader.buzzer_sound(0xff)
 #reader.info()
 #reader.print_data()
-write(reader, 0x01, 0x10, [0x90 for i in range(16)])
-print(read(reader, 0x01, 0x20))
+#write(reader, 0x01, 0x10, [0x90 for i in range(16)])
+#print(read(reader, 0x01, 0x20))

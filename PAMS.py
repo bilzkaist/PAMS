@@ -19,6 +19,12 @@ import os
 import random
 import urllib.parse
 
+import requests
+from requests.structures import CaseInsensitiveDict
+
+url = "http://localhost:9999/api/v1/mintNFT/1"
+
+
 
 curve = secp256k1
 
@@ -71,21 +77,28 @@ class NIZKP ():
         rd = random.Random()
         rd.seed(Number)
         self.uuidStr = CardUUID or str(uuid.UUID(int=rd.getrandbits(128)))
-        proveKey = PrivateKey(int(sha256((secretStr + self.locationTagStr + self.uuidStr).encode('utf-8')).hexdigest(),16))
+        reader = Reader()
+        uid = reader.get_uid()
+        print("UID : ", uid)
+        proveKey = PrivateKey(int(sha256((str(uid)).encode('utf-8')).hexdigest(),16))
+        #proveKey = PrivateKey(int(sha256((secretStr + self.locationTagStr + self.uuidStr).encode('utf-8')).hexdigest(),16))
         verifyKey = proveKey.publicKey() 
         #print("vk : ", verifyKey.toString())
-        return proveKey.toString(), verifyKey.toString(), self.locationTagStr
+        return verifyKey.toString(), self.locationTagStr
 
         
         
 
-    def prove(self, NFC_Card_User):
+    def prove(self, challenge):
         i = input("Enter Prove Password : ")
         key = str(int(sha256((str(i)).encode('utf-8')).hexdigest(),16))[:32]
         k = bytes(key,encoding='utf8')
         aes = aesctr(k)
-        rc = str(NFC_Card_User.blockNumber) 
-        pk = PrivateKey.fromString(NFC_Card_User.proveKey, secp256k1)
+        rc = str(challenge) 
+        #pk = PrivateKey.fromString(NFC_Card_User.proveKey, secp256k1)
+        reader = Reader()
+        uid = reader.get_uid()
+        pk = PrivateKey(int(sha256((str(uid)).encode('utf-8')).hexdigest(),16))
         signature = Ecdsa.sign(rc, pk)
         p = (rc + "," + signature.toBase64())
         #print("Proof : ",p)
@@ -122,10 +135,14 @@ def main():
     locationOP = "8Q8999F8+J799C6+V5"
     cardsRegistered = ["0x437DFB03", "0x0BC250F9" , "0x8346FC03", "0x9670FC03", "0xEB3EBB1F"]
     Alice = NIZKP()
-    pk, vk, lt = Alice.generateKeys(Counter, locationOP)
+    vk, lt = Alice.generateKeys(Counter, locationOP)
     NFTAlice = mintNFT(lt,vk)
-    NFC_Card_Alice = NFC_Card(pk,NFTAlice.blockNumber)
-    responseAlice = Alice.prove(NFC_Card_Alice)
+    # headers = CaseInsensitiveDict()
+    # headers["Content-Type"] = "application/json"
+    # data = '{"Bilz":"test"}'
+    #NFC_Card_Alice = NFC_Card(NFTAlice.blockNumber)
+    challenge = NFTAlice.blockNumber
+    responseAlice = Alice.prove(challenge)
     if (Alice.verify(responseAlice,NFTAlice)):
         print("Passed !!!")
     else:
