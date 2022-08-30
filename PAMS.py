@@ -1,4 +1,4 @@
-
+import numpy as np
 from acr122u.nfc import *
 from json import dumps
 import base64
@@ -44,6 +44,11 @@ APIKEY_ETHERSCAN="N7QHYXYBSFRH5TMP1T82I6QKZ6QXYC3URT"
 curve = secp256k1
 
 counter = 1
+
+class LocalData(object):
+    rid = {}
+    records = {}
+    cards = {}
 
 class NFT:
     def __init__(self, locationTag, verifyKey, inputLink = None):
@@ -101,9 +106,15 @@ class NIZKP ():
     def generateKeys(self, Secret=None):
         print("...............................REG........................................")
         secretStr = Secret or str(input("Enter Key Secret : "))
+        LocalData.rid
         reader = Reader()
         uid = reader.get_uid()
-        proveKey = PrivateKey(int(sha3_512((str(uid) + secretStr).encode('utf-8')).hexdigest(),16))
+        nums = np.array(uid)
+        print("UID :",   nums)
+        LocalData.cards[LocalData.rid] = str(uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}'))
+        print("LocalData.cards[",LocalData.rid,"] : ",LocalData.cards[LocalData.rid])
+        # resp = requests.post(url, headers=headers, data=data)
+        proveKey = PrivateKey(int(sha3_512((LocalData.cards[LocalData.rid] + secretStr).encode('utf-8')).hexdigest(),16))
         verifyKey = proveKey.publicKey()
         print("Prove Key : ", proveKey.toString()) 
         print("Verify Key : ", verifyKey.toString()) 
@@ -160,7 +171,11 @@ class NIZKP ():
         #pk = PrivateKey.fromString(NFC_Card_User.proveKey, secp256k1)
         reader = Reader()
         uid = reader.get_uid()
-        pk = PrivateKey(int(sha3_512((str(uid) + secretStr).encode('utf-8')).hexdigest(),16))
+        print("UID :",   uid)
+        LocalData.cards[LocalData.rid] = str(uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}'))
+        print("LocalData.cards[",LocalData.rid,"] : ",LocalData.cards[LocalData.rid])
+        # resp = requests.post(url, headers=headers, data=data)
+        pk = PrivateKey(int(sha3_512((LocalData.cards[LocalData.rid] + secretStr).encode('utf-8')).hexdigest(),16))
         signature = Ecdsa.sign(rc, pk)
         p = (rc + "," + signature.toBase64())
         #print("challenge : ",rc)
@@ -235,6 +250,8 @@ def main():
     urlOPD = "https://plus.codes/8Q8999F8+J7"
     locationOP = "8Q8999F8+J7" #KAIST N1 Building Location
     #cardsRegistered = ["0x437DFB03", "0x0BC250F9" , "0x8346FC03", "0x9670FC03", "0xEB3EBB1F"]
+    LocalData.rid = str(randint(0, 99999999))
+    print(str(uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}')))#uuid.uuid4()))#uuid.UUID(rd.getrandbits(128)))
     Alice = NIZKP(30)
     print("Location OP: ", locationOP)
     lt = Alice.encodeLocationURL(locationOP)
