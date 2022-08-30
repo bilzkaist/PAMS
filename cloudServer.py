@@ -20,6 +20,13 @@ import json
 import threading
 from urllib import parse
 
+import pyotp
+# generate random integer values
+from random import seed
+from random import randint
+# seed random number generator
+seed(1)
+
 # POST request
 # curl -X POST http://143.248.55.55:9999/api/v1/mintNFT/1 -d '{\"Bilz\":\"test\"}' -H "Content-Type: application/json"
 # GET  request
@@ -33,11 +40,28 @@ BRAVO  = [2]
 CHARLIE = [3]
 
 class LocalData(object):
+    id = {}
     records = {}
+    cards = {}
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
-        if re.search('/api/v1/mintNFT/*', self.path):
+        if re.search('/api/v1/regNFTCard/*', self.path):
+            ctype, pdict = cgi.parse_header(
+                self.headers.get('content-type'))
+            if ctype == 'application/json':
+                length = int(self.headers.get('content-length'))
+                rfile_str = self.rfile.read(length).decode('utf8')
+                data = parse.parse_qs(rfile_str, keep_blank_values=1)
+                card_uid = self.path.split('/')[-1]
+                LocalData.cards[card_uid] = data
+                print("Minted NFT at blockNumber %s: %s" % (record_id, data))
+                # HTTP 200: ok
+                self.send_response(200)
+            else:
+                # HTTP 400: bad request
+                self.send_response(400, "Bad Request: must give data")
+        elif re.search('/api/v1/mintNFT/*', self.path):
             ctype, pdict = cgi.parse_header(
                 self.headers.get('content-type'))
             if ctype == 'application/json':
